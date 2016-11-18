@@ -25,6 +25,10 @@ import java.util.Queue;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.SetKeywordMarkerFilter;
+import org.apache.lucene.analysis.de.GermanMinimalStemmer;
+import org.apache.lucene.analysis.en.EnglishMinimalStemmer;
+import org.apache.lucene.analysis.no.NorwegianMinimalStemmer;
+import org.apache.lucene.analysis.sv.SwedishLightStemmer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.KeywordAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
@@ -45,7 +49,7 @@ public final class DictionaryLemmatizerFilter extends TokenFilter {
   private final KeywordAttribute keywordAttr = addAttribute(KeywordAttribute.class);
   private final PositionIncrementAttribute positionAttr = addAttribute(PositionIncrementAttribute.class);
   private final Queue<String> terms = new LinkedList<String>();
-
+  private final Object fallbackStemmer;
   private AttributeSource.State current = null;
 
   /**
@@ -54,9 +58,11 @@ public final class DictionaryLemmatizerFilter extends TokenFilter {
    * @param input TokenStream whose tokens will be lemmatized
    * @param wordlist a Hashmap containing all the words with their lemmas
    */
-  public DictionaryLemmatizerFilter(final TokenStream input, final Map<String, String[]> wordlist) {
+  public DictionaryLemmatizerFilter(final TokenStream input, final Map<String, String[]> wordlist,
+      final Object fallbackStemmer) {
     super(input);
     lemmatizer = new DictionaryLemmatizer(wordlist);
+    this.fallbackStemmer = fallbackStemmer;
   }
 
   @Override
@@ -72,35 +78,48 @@ public final class DictionaryLemmatizerFilter extends TokenFilter {
         final String tokenTerm = new String(buffer, 0, termAtt.length());
 
         final String[] values = lemmatizer.lemmatize(tokenTerm);
+
         if (values != null) {
-          // Replace first token with the lemma:
-          termAtt.setEmpty().append(values[0]);
-          if (values.length > 1) {
-            // Queue remaining lemmas for later processing
-            for (int i = 1; i < values.length; i++) {
+          if (values.length == 1) {
+            // Replace token with the lemma:
+            replaceToken(values[0]);
+          } else if (values.length > 1) {
+            for (int i = 0; i < values.length; i++) {
               terms.add(values[i]);
             }
           }
+        } else if (fallbackStemmer != null) {
+
+          if (fallbackStemmer instanceof NorwegianMinimalStemmer) {
+            ((NorwegianMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+          } else if (fallbackStemmer instanceof SwedishLightStemmer) {
+            ((SwedishLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+          } else if (fallbackStemmer instanceof GermanMinimalStemmer) {
+            ((GermanMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+          } else if (fallbackStemmer instanceof EnglishMinimalStemmer) {
+            ((EnglishMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+          }
+
         }
         current = captureState();
+        return true;
+      } else {
+        return false;
       }
-      return true;
     } else {
       return false;
     }
   }
 
-  protected boolean createToken(final String synonym, final AttributeSource.State current) {
+  protected boolean createToken(final String token, final AttributeSource.State current) {
     restoreState(current);
-    termAtt.setEmpty().append(synonym);
+    replaceToken(token);
     positionAttr.setPositionIncrement(0);
     return true;
   }
 
-  @Override
-  public void reset() throws IOException {
-    super.reset();
-    current = null;
-  }
 
+  private void replaceToken(final String token) {
+    termAtt.setEmpty().append(token);
+  }
 }
