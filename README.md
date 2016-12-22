@@ -43,7 +43,8 @@ storePosTag||
 
 ## Dictionary - dictionary.txt
 
-Lemma	word	word class
+```
+#Lemma	word	word class
 
 sykkel	sykler	noun
 sykkel	sykkelen	noun
@@ -57,4 +58,4 @@ fragen	fragt	verb
 
 buch	bücher	noun
 gammel	eldre	noun
-'
+```
