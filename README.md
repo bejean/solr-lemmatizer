@@ -2,7 +2,7 @@
 
 ## configuration - shema.xml
 
-'    
+```
     <fieldType name="text_lem" class="solr.TextField" positionIncrementGap="100" multiValued="true">
       <analyzer type="index">
         <tokenizer class="solr.StandardTokenizerFactory"/>
@@ -25,7 +25,7 @@
         <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
     </fieldType>
-'
+```
 
 Parameter | Sample | Description
 ------------ | -------------| -------------
