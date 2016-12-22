@@ -29,7 +29,7 @@
 
 Parameter | Sample | Default | Description
 ------------|-------------|-------------|-------------
-dictionaries|fullform_bm.txt.gz,fullform_nn.txt.gz,custom_dic.txt||
+dictionaries|dic1.txt.gz,dic2.txt||
 lemmaPos|1||Where to find the lemmas
 wordPos|2||Where to find the words
 wordClassPos|3||(optional) Where to find the word classes. 
