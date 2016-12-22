@@ -34,10 +34,9 @@ lemmaPos|1||Where to find the lemmas
 wordPos|2||Where to find the words
 wordClassPos|3||(optional) Where to find the word classes. 
 charset|iso-8859-1|UTF-8|(optional) charset of the dic file
-storePosTag|false|false|(optional)
 wordClasses|subst,verb,adj||which word class to add (note: bad parameter name, will be changed)
 reduceTo|subst,verb||words with several stems get reduced to one in this order. Optionally
-minLength|||
+minLength|||(optional) word minimum length in dictionnary. Smaller words will be ignored.
 storePosTag|false|false|(optional) if 'true' wordClassPos should be >0 and wordClasses shouldn't be empty
 
 
