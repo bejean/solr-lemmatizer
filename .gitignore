@@ -1,0 +1,11 @@
+solr-6.2.1
+target
+solr
+/.classpath
+/.project
+
+classes/
+
+\.idea/
+
+solr-lemmatizer\.iml
