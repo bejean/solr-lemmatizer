@@ -43,6 +43,8 @@ import org.apache.lucene.analysis.util.ResourceLoader;
 import org.apache.lucene.analysis.util.ResourceLoaderAware;
 import org.apache.lucene.analysis.util.TokenFilterFactory;
 import org.apache.lucene.util.IOUtils;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
 
 /**
  * Factory for {@link DictionaryLemmatizerFilter}. Minimal configuration
@@ -58,8 +60,8 @@ import org.apache.lucene.util.IOUtils;
 public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implements
     ResourceLoaderAware {
 
-  private final Map<String, Set<String>> unnormalizedWordlist = new HashMap<String, Set<String>>();
-  private final Map<String, String[]> normalizedWordlist = new HashMap<String, String[]>();
+  private Map<String, Set<String>> unnormalizedWordlist = null;
+  private Map<String, String[]> normalizedWordlist = null;
 
   private Reader reader = null;
   private BufferedReader br = null;
@@ -73,6 +75,7 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
   private static final String PARAM_REDUCE_TO = "reduceTo";
   private static final String PARAM_STORE_POS_TAG = "storePosTag";
   private static final String PARAM_DICTIONARIES = "dictionaries";
+  private static final String PARAM_DIRECTMEMORY = "directMemory";
 
   private int minLength;
   private String dictionaries;
@@ -83,6 +86,7 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
   private String charset;
   private String[] reduceTo;
   private boolean storePosTag;
+  private boolean directMemory;
 
   /** Creates a new DictionaryLemmatizerFilterFactory */
   public DictionaryLemmatizerFilterFactory(final Map<String, String> args) {
@@ -99,6 +103,7 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
     final String reduceToList = get(args, PARAM_REDUCE_TO);
     reduceTo = (reduceToList != null) ? reduceToList.split(",") : null;
     storePosTag = getBoolean(args, PARAM_STORE_POS_TAG, false);
+    directMemory = getBoolean(args, PARAM_DIRECTMEMORY, false);
 
     if (lemmaPos < 0) {
       throw new IllegalArgumentException("Parameter " + PARAM_LEMMA_POS + " not properly set");
@@ -123,6 +128,14 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
   }
 
   private void handleStream(final List<InputStream> inputStreams) throws IOException {
+    if (directMemory) {
+      DB db = DBMaker.memoryDirectDB().make();
+      unnormalizedWordlist = (Map<String, Set<String>>) db.hashMap("unnormalizedWordlist").create();
+      normalizedWordlist = (Map<String, String[]>) db.hashMap("normalizedWordlist").create();
+    } else {
+      unnormalizedWordlist = new HashMap<String, Set<String>>();
+      normalizedWordlist = new HashMap<String, String[]>();
+    }
     for (InputStream inputStream : inputStreams) {
       if (inputStream instanceof ZipInputStream) {
         ZipEntry entry;
@@ -153,7 +166,7 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
   private void addDictionary(final InputStream inputStream) throws IOException {
     reader = new InputStreamReader(inputStream, charset);
     br = new BufferedReader(reader);
-    String line = null;
+    String line;
     while ((line = br.readLine()) != null) {
       final String[] parts = line.split("\t");
 
@@ -193,7 +206,7 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
         continue;
       }
 
-      Set<String> entry = unnormalizedWordlist.get(word);
+      Set<String> entry = (Set<String>) unnormalizedWordlist.get(word);
       if (entry == null) {
         entry = new LinkedHashSet<String>();
       }
@@ -240,9 +253,6 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
                 "");
             final String[] newLemmas = { newLemma };
             normalizedWordlist.put(word, newLemmas);
-            continue;
-          } else {
-            continue;
           }
         } else {
           storeLemmas(lemmas, word);
