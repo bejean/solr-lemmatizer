@@ -32,8 +32,6 @@ public class TestDictionaryLemmatizerFilterFactory extends BaseTokenStreamFactor
 	public void testLemmatizerWithNotRegularLemmas() throws Exception {
 		Reader reader = new StringReader("bücher eldre");
 		TokenStream stream = whitespaceMockTokenizer(reader);
-		//stream = tokenFilterFactory("DictionaryLemmatizer", "dictionaries", "dictionary.txt",
-		//    "lemmaPos", "0", "wordPos", "1").create(stream);
 		Map<String, String> args = new HashMap<String, String>();
 		args.put("dictionaries", "dictionary.txt");
 		args.put("lemmaPos", "0");
@@ -46,11 +44,56 @@ public class TestDictionaryLemmatizerFilterFactory extends BaseTokenStreamFactor
 		assertTokenStreamContents(stream, new String[] { "buch", "gammel" });
 	}
 
+	public void testLemmatizerWithNotRegularLemmasInDirectMemory() throws Exception {
+		Reader reader = new StringReader("bücher eldre");
+		TokenStream stream = whitespaceMockTokenizer(reader);
+		Map<String, String> args = new HashMap<String, String>();
+		args.put("dictionaries", "dictionary.txt");
+		args.put("lemmaPos", "0");
+		args.put("wordPos", "1");
+		args.put("directMemory", "true");
+		DictionaryLemmatizerFilterFactory f = new DictionaryLemmatizerFilterFactory(args);
+		ResourceLoader l = new ClasspathResourceLoader();
+		f.inform(l);
+		stream = f.create(stream);
+		assertTrue(stream instanceof DictionaryLemmatizerFilter);
+		assertTokenStreamContents(stream, new String[] { "buch", "gammel" });
+	}
+
+  public void testLemmatizerWithNotRegularLemmasHuge() throws Exception {
+    Reader reader = new StringReader("abaisseriez agnellera");
+    TokenStream stream = whitespaceMockTokenizer(reader);
+    Map<String, String> args = new HashMap<String, String>();
+    args.put("dictionaries", "french-verb.txt");
+    args.put("lemmaPos", "0");
+    args.put("wordPos", "1");
+    DictionaryLemmatizerFilterFactory f = new DictionaryLemmatizerFilterFactory(args);
+    ResourceLoader l = new ClasspathResourceLoader();
+    f.inform(l);
+    stream = f.create(stream);
+    assertTrue(stream instanceof DictionaryLemmatizerFilter);
+    assertTokenStreamContents(stream, new String[] { "abaisser", "agneler" });
+  }
+
+  public void testLemmatizerWithNotRegularLemmasInDirectMemoryHuge() throws Exception {
+    Reader reader = new StringReader("abaisseriez agnellera");
+    TokenStream stream = whitespaceMockTokenizer(reader);
+    Map<String, String> args = new HashMap<String, String>();
+    args.put("dictionaries", "french-verb.txt");
+    args.put("lemmaPos", "0");
+    args.put("wordPos", "1");
+    args.put("directMemory", "true");
+    DictionaryLemmatizerFilterFactory f = new DictionaryLemmatizerFilterFactory(args);
+    ResourceLoader l = new ClasspathResourceLoader();
+    f.inform(l);
+    stream = f.create(stream);
+    assertTrue(stream instanceof DictionaryLemmatizerFilter);
+    assertTokenStreamContents(stream, new String[] { "abaisser", "agneler" });
+  }
+
 	public void testLemmatizerWithMultipleLemmas() throws Exception {
 		Reader reader = new StringReader("sykler");
 		TokenStream stream = whitespaceMockTokenizer(reader);
-		//stream = tokenFilterFactory("DictionaryLemmatizer", "dictionaries", "dictionary.txt",
-		//    "lemmaPos", "0", "wordPos", "1").create(stream);
 		Map<String, String> args = new HashMap<String, String>();
 		args.put("dictionaries", "dictionary.txt");
 		args.put("lemmaPos", "0");
@@ -65,9 +108,6 @@ public class TestDictionaryLemmatizerFilterFactory extends BaseTokenStreamFactor
 	public void testLemmatizerUsingPOSTags() throws Exception {
 		Reader reader = new StringReader("sykler");
 		TokenStream stream = whitespaceMockTokenizer(reader);
-		//stream = tokenFilterFactory("DictionaryLemmatizer", "dictionaries", "dictionary.txt",
-		//    "lemmaPos", "0", "wordPos", "1", "wordClassPos", "2", "storePosTag", "true", "wordClasses",
-		//    "noun,verb").create(stream);
 		Map<String, String> args = new HashMap<String, String>();
 		args.put("dictionaries", "dictionary.txt");
 		args.put("lemmaPos", "0");
@@ -85,9 +125,6 @@ public class TestDictionaryLemmatizerFilterFactory extends BaseTokenStreamFactor
 	public void testLemmatizerUsingReduction() throws Exception {
 		Reader reader = new StringReader("sykler");
 		TokenStream stream = whitespaceMockTokenizer(reader);
-		//stream = tokenFilterFactory("DictionaryLemmatizer", "dictionaries", "dictionary.txt",
-		//    "lemmaPos", "0", "wordPos", "1", "wordClassPos", "2", "reduceTo", "noun", "wordClasses",
-		//    "noun,verb").create(stream);
 		Map<String, String> args = new HashMap<String, String>();
 		args.put("dictionaries", "dictionary.txt");
 		args.put("lemmaPos", "0");
@@ -107,8 +144,6 @@ public class TestDictionaryLemmatizerFilterFactory extends BaseTokenStreamFactor
 		try {
 			Reader reader = new StringReader("sykler");
 			TokenStream stream = whitespaceMockTokenizer(reader);
-			//tokenFilterFactory("DictionaryLemmatizer", "dictionaries", "dictionary.txt", "lemmaPos", "0",
-			//    "wordPos", "1", "bogusArg", "bogusValue");
 			Map<String, String> args = new HashMap<String, String>();
 			args.put("dictionaries", "dictionary.txt");
 			args.put("lemmaPos", "0");
@@ -121,5 +156,4 @@ public class TestDictionaryLemmatizerFilterFactory extends BaseTokenStreamFactor
 			assertTrue(expected.getMessage().contains("Unknown parameters"));
 		}
 	}
-
 }
