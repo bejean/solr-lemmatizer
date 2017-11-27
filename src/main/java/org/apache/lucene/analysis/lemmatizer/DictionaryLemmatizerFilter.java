@@ -24,15 +24,33 @@ import java.util.Queue;
 
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.ar.ArabicStemmer;
+import org.apache.lucene.analysis.bg.BulgarianStemmer;
+import org.apache.lucene.analysis.ckb.SoraniStemmer;
+import org.apache.lucene.analysis.cz.CzechStemmer;
+import org.apache.lucene.analysis.de.GermanLightStemmer;
 import org.apache.lucene.analysis.de.GermanMinimalStemmer;
-import org.apache.lucene.analysis.en.EnglishMinimalStemFilter;
+import org.apache.lucene.analysis.el.GreekStemmer;
 import org.apache.lucene.analysis.en.EnglishMinimalStemmer;
+import org.apache.lucene.analysis.es.SpanishLightStemmer;
+import org.apache.lucene.analysis.fi.FinnishLightStemmer;
 import org.apache.lucene.analysis.fr.FrenchLightStemmer;
-import org.apache.lucene.analysis.fr.FrenchMinimalStemFilter;
 import org.apache.lucene.analysis.fr.FrenchMinimalStemmer;
-import org.apache.lucene.analysis.miscellaneous.SetKeywordMarkerFilter;
+import org.apache.lucene.analysis.gl.GalicianMinimalStemmer;
+import org.apache.lucene.analysis.gl.GalicianStemmer;
+import org.apache.lucene.analysis.hi.HindiStemmer;
+import org.apache.lucene.analysis.hu.HungarianLightStemmer;
+import org.apache.lucene.analysis.id.IndonesianStemmer;
+import org.apache.lucene.analysis.it.ItalianLightStemmer;
+import org.apache.lucene.analysis.lv.LatvianStemmer;
+import org.apache.lucene.analysis.no.NorwegianLightStemmer;
 import org.apache.lucene.analysis.no.NorwegianMinimalStemmer;
+import org.apache.lucene.analysis.pt.PortugueseLightStemmer;
+import org.apache.lucene.analysis.pt.PortugueseMinimalStemmer;
+import org.apache.lucene.analysis.pt.PortugueseStemmer;
+import org.apache.lucene.analysis.ru.RussianLightStemmer;
 import org.apache.lucene.analysis.sv.SwedishLightStemmer;
+import org.apache.lucene.analysis.miscellaneous.SetKeywordMarkerFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.KeywordAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
@@ -55,7 +73,7 @@ public final class DictionaryLemmatizerFilter extends TokenFilter {
   private final PositionIncrementAttribute positionAttr = addAttribute(PositionIncrementAttribute.class);
   private final Queue<String> terms = new LinkedList<String>();
   private final Object fallbackStemmer;
-
+  private String stemmerName;
   private AttributeSource.State current = null;
 
   /**
@@ -64,10 +82,11 @@ public final class DictionaryLemmatizerFilter extends TokenFilter {
    * @param input TokenStream whose tokens will be lemmatized
    * @param wordlist a Hashmap containing all the words with their lemmas
    */
-  public DictionaryLemmatizerFilter(final TokenStream input, final Map<String, String[]> wordlist, Object fallbackStemmer) {
+  public DictionaryLemmatizerFilter(final TokenStream input, final Map<String, String[]> wordlist, Object fallbackStemmer, String stemmerName) {
     super(input);
     lemmatizer = new DictionaryLemmatizer(wordlist);
     this.fallbackStemmer = fallbackStemmer;
+    this.stemmerName = stemmerName;
   }
 
   @Override
@@ -110,18 +129,62 @@ public final class DictionaryLemmatizerFilter extends TokenFilter {
 
           } else {
             int len = 0;
-            if (fallbackStemmer instanceof NorwegianMinimalStemmer) {
-              len = ((NorwegianMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
-            } else if (fallbackStemmer instanceof SwedishLightStemmer) {
-              len = ((SwedishLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
-            } else if (fallbackStemmer instanceof GermanMinimalStemmer) {
-              len = ((GermanMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            //String newTerm = null;
+            if (fallbackStemmer instanceof ArabicStemmer) {
+              len = ((ArabicStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof BulgarianStemmer) {
+              len = ((BulgarianStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof CzechStemmer) {
+              len = ((CzechStemmer) fallbackStemmer).stem(buffer, termAtt.length());
             } else if (fallbackStemmer instanceof EnglishMinimalStemmer) {
               len = ((EnglishMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
-            } else if (fallbackStemmer instanceof FrenchMinimalStemmer) {
-              len = ((FrenchMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof FinnishLightStemmer) {
+              len = ((FinnishLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
             } else if (fallbackStemmer instanceof FrenchLightStemmer) {
               len = ((FrenchLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof FrenchMinimalStemmer) {
+              len = ((FrenchMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof GalicianMinimalStemmer) {
+              len = ((GalicianMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof GalicianStemmer) {
+              len = ((GalicianStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof GermanLightStemmer) {
+              len = ((GermanLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof GermanMinimalStemmer) {
+              len = ((GermanMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof GreekStemmer) {
+              len = ((GreekStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof HindiStemmer) {
+              len = ((HindiStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof HungarianLightStemmer) {
+              len = ((HungarianLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof IndonesianStemmer) {
+              if ("IndonesianLightStemmer".equals(stemmerName))
+                len = ((IndonesianStemmer) fallbackStemmer).stem(buffer, termAtt.length(), true);
+              else
+                len = ((IndonesianStemmer) fallbackStemmer).stem(buffer, termAtt.length(), false);
+            } else if (fallbackStemmer instanceof ItalianLightStemmer) {
+              len = ((ItalianLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof LatvianStemmer) {
+              len = ((LatvianStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof NorwegianLightStemmer) {
+              len = ((NorwegianLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof NorwegianMinimalStemmer) {
+              len = ((NorwegianMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof PortugueseLightStemmer) {
+              len = ((PortugueseLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof PortugueseMinimalStemmer) {
+              len = ((PortugueseMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof PortugueseStemmer) {
+              len = ((PortugueseStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof RussianLightStemmer) {
+              len = ((RussianLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof SoraniStemmer) {
+              len = ((SoraniStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof SpanishLightStemmer) {
+              len = ((SpanishLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof SwedishLightStemmer) {
+              len = ((SwedishLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
             }
             if (len > 0) {
               termAtt.setEmpty().append(tokenTerm.substring(0, len));

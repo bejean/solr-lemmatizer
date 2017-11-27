@@ -5,5 +5,32 @@ egrep '^[^[:space:],-]+,[^[:space:]\.-]+\.V' dela-fr-public.dic | sed -E "s/([^,
 egrep '^[^[:space:],-]+,[^[:space:]\.-]+\.DET\+' dela-fr-public.dic | sed -E "s/([^,]*),([^\.]*).*/\1\t\2\tdeterminant/"
 egrep '^[^[:space:],-]+,[^[:space:]\.-]+\.A\+' dela-fr-public.dic | sed -E "s/([^,]*),([^\.]*).*/\1\t\2\tadjective/"
 
-
 http://www.patenotte.name/Middlebury/Middlebury3201/Grammaire/EtiquettesGrammaticales.html
+
+ArabicStemmer
+BulgarianStemmer
+CzechStemmer
+EnglishMinimalStemmer
+FinnishLightStemmer
+FrenchLightStemmer
+FrenchMinimalStemmer
+GalicianMinimalStemmer
+GalicianStemmer
+GermanLightStemmer
+GermanMinimalStemmer
+GreekStemmer
+HindiStemmer
+HungarianLightStemmer
+IndonesianLightStemmer
+IndonesianStemmer
+ItalianLightStemmer
+LatvianStemmer
+NorwegianLightStemmer
+NorwegianMinimalStemmer
+PortugueseLightStemmer
+PortugueseMinimalStemmer
+PortugueseStemmer
+RussianLightStemmer
+SoraniStemmer
+SpanishLightStemmer
+SwedishLightStemmer

@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,18 +38,38 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.ar.ArabicStemmer;
+import org.apache.lucene.analysis.bg.BulgarianStemmer;
+import org.apache.lucene.analysis.ckb.SoraniStemmer;
+import org.apache.lucene.analysis.cz.CzechStemmer;
+import org.apache.lucene.analysis.de.GermanLightStemmer;
+import org.apache.lucene.analysis.de.GermanMinimalStemmer;
+import org.apache.lucene.analysis.de.GermanStemmer;
+import org.apache.lucene.analysis.el.GreekStemmer;
 import org.apache.lucene.analysis.en.EnglishMinimalStemmer;
+import org.apache.lucene.analysis.es.SpanishLightStemmer;
+import org.apache.lucene.analysis.fi.FinnishLightStemmer;
 import org.apache.lucene.analysis.fr.FrenchLightStemmer;
-import org.apache.lucene.analysis.fr.FrenchMinimalStemFilter;
 import org.apache.lucene.analysis.fr.FrenchMinimalStemmer;
+import org.apache.lucene.analysis.gl.GalicianMinimalStemmer;
+import org.apache.lucene.analysis.gl.GalicianStemmer;
+import org.apache.lucene.analysis.hi.HindiStemmer;
+import org.apache.lucene.analysis.hu.HungarianLightStemmer;
+import org.apache.lucene.analysis.id.IndonesianStemmer;
+import org.apache.lucene.analysis.it.ItalianLightStemmer;
+import org.apache.lucene.analysis.lv.LatvianStemmer;
+import org.apache.lucene.analysis.no.NorwegianLightStemmer;
+import org.apache.lucene.analysis.no.NorwegianMinimalStemmer;
+import org.apache.lucene.analysis.pt.PortugueseLightStemmer;
+import org.apache.lucene.analysis.pt.PortugueseMinimalStemmer;
+import org.apache.lucene.analysis.pt.PortugueseStemmer;
+import org.apache.lucene.analysis.ru.RussianLightStemmer;
 import org.apache.lucene.analysis.sv.SwedishLightStemmer;
 import org.apache.lucene.analysis.util.ResourceLoader;
 import org.apache.lucene.analysis.util.ResourceLoaderAware;
 import org.apache.lucene.analysis.util.TokenFilterFactory;
 import org.apache.lucene.util.IOUtils;
-import org.apache.solr.core.SolrResourceLoader;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.tartarus.snowball.SnowballProgram;
@@ -97,10 +116,8 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
   private String[] reduceTo;
   private boolean storePosTag;
   private boolean directMemory;
+  private Object fallbackStemmer;
   private String fallBackStemmerClassName;
-  private Map<String, String>   fallBackStemmerParams;
-  //private ResourceLoader loader;
-  //private Object filter = null;
 
   /** Creates a new DictionaryLemmatizerFilterFactory */
   public DictionaryLemmatizerFilterFactory(final Map<String, String> args) {
@@ -124,10 +141,105 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
       String[] fallBackStemmerArgs = fallBackStemmer.split("\\|");
       try {
         fallBackStemmerClassName = fallBackStemmerArgs[0];
-        fallBackStemmerParams = new HashMap<String, String> ();
+        Map<String, String> fallBackStemmerParams = new HashMap<String, String> ();
         for (int i=1; i<fallBackStemmerArgs.length; i++) {
           String[] param = fallBackStemmerArgs[i].split("=");
           fallBackStemmerParams.put(param[0], param[1]);
+        }
+
+        switch (fallBackStemmerClassName) {
+          case "ArabicStemmer":
+            fallbackStemmer = new ArabicStemmer();
+            break;
+         case "BulgarianStemmer":
+            fallbackStemmer = new BulgarianStemmer();
+            break;
+          case "CzechStemmer":
+            fallbackStemmer = new CzechStemmer();
+            break;
+          case "EnglishMinimalStemmer":
+            fallbackStemmer = new EnglishMinimalStemmer();
+            break;
+          case "FinnishLightStemmer":
+            fallbackStemmer = new FinnishLightStemmer();
+            break;
+          case "FrenchLightStemmer":
+            fallbackStemmer = new FrenchLightStemmer();
+            break;
+          case "FrenchMinimalStemmer":
+            fallbackStemmer = new FrenchMinimalStemmer();
+            break;
+          case "GalicianMinimalStemmer":
+            fallbackStemmer = new GalicianMinimalStemmer();
+            break;
+          case "GalicianStemmer":
+            fallbackStemmer = new GalicianStemmer();
+            break;
+          case "GermanLightStemmer":
+            fallbackStemmer = new GermanLightStemmer();
+            break;
+          case "GermanMinimalStemmer":
+            fallbackStemmer = new GermanMinimalStemmer();
+            break;
+          case "GermanStemmer":
+            fallbackStemmer = new GermanStemmer();
+            break;
+          case "GreekStemmer":
+            fallbackStemmer = new GreekStemmer();
+            break;
+          case "HindiStemmer":
+            fallbackStemmer = new HindiStemmer();
+            break;
+          case "HungarianLightStemmer":
+            fallbackStemmer = new HungarianLightStemmer();
+            break;
+          case "IndonesianStemmer":
+          case "IndonesianLightStemmer":
+            fallbackStemmer = new IndonesianStemmer();
+            break;
+          case "ItalianLightStemmer":
+            fallbackStemmer = new ItalianLightStemmer();
+            break;
+          case "LatvianStemmer":
+            fallbackStemmer = new LatvianStemmer();
+            break;
+          case "NorwegianLightStemmer":
+            fallbackStemmer = new NorwegianLightStemmer(NorwegianLightStemmer.BOKMAAL | NorwegianLightStemmer.NYNORSK);
+            break;
+          case "NorwegianMinimalStemmer":
+            fallbackStemmer = new NorwegianMinimalStemmer(NorwegianLightStemmer.BOKMAAL | NorwegianLightStemmer.NYNORSK);
+            break;
+          case "PortugueseLightStemmer":
+            fallbackStemmer = new PortugueseLightStemmer();
+            break;
+          case "PortugueseMinimalStemmer":
+            fallbackStemmer = new PortugueseMinimalStemmer();
+            break;
+          case "PortugueseStemmer":
+            fallbackStemmer = new PortugueseStemmer();
+            break;
+          case "RussianLightStemmer":
+            fallbackStemmer = new RussianLightStemmer();
+            break;
+          case "SoraniStemmer":
+            fallbackStemmer = new SoraniStemmer();
+            break;
+          case "SpanishLightStemmer":
+            fallbackStemmer = new SpanishLightStemmer();
+            break;
+          case "SwedishLightStemmer":
+            fallbackStemmer = new SwedishLightStemmer();
+            break;
+          case "SnowballStemmer":
+            String name = fallBackStemmerParams.get("language");
+            try {
+              Class<? extends SnowballProgram> stemClass =
+                      Class.forName("org.tartarus.snowball.ext." + name + "Stemmer").asSubclass(SnowballProgram.class);
+              fallbackStemmer = stemClass.newInstance();
+            } catch (Exception e) {
+              throw new IllegalArgumentException("Invalid stemmer class specified: " + name, e);
+            }
+            break;
         }
       } catch (Exception e) {
         throw new IllegalArgumentException("Parameter " + PARAM_FALLBACK_STEMMER + " not properly set");
@@ -325,46 +437,7 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
 
   @Override
   public TokenStream create(TokenStream input) {
-
-    Object fallbackStemmer = null;
-    try {
-      switch (fallBackStemmerClassName) {
-        case "FrenchMinimalStemmer":
-          fallbackStemmer = new FrenchMinimalStemmer();
-          break;
-        case "FrenchLightStemmer":
-          fallbackStemmer = new FrenchLightStemmer();
-          break;
-        case "EnglishMinimalStemmer":
-          fallbackStemmer = new EnglishMinimalStemmer();
-          break;
-        case "SnowballStemmer":
-          String name = fallBackStemmerParams.get("language");
-          try {
-            Class<? extends SnowballProgram> stemClass =
-                    Class.forName("org.tartarus.snowball.ext." + name + "Stemmer").asSubclass(SnowballProgram.class);
-            fallbackStemmer = stemClass.newInstance();
-          } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid stemmer class specified: " + name, e);
-          }
-          break;
-      }
-    } catch (Exception e) {
-
-    }
-
-      /*
-    TokenFilter fallbackStemmer = null;
-    if (filterFactory != null) {
-      if (filterFactory instanceof ResourceLoaderAware) {
-        try {
-          ((ResourceLoaderAware) filterFactory).inform(this.loader);
-          fallbackStemmer = filterFactory.create(input);
-        } catch (IOException e) {}
-      }
-    }
-    */
-    return new DictionaryLemmatizerFilter(input, normalizedWordlist, fallbackStemmer);
+    return new DictionaryLemmatizerFilter(input, normalizedWordlist, fallbackStemmer, fallBackStemmerClassName);
   }
 
   @Override
