@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,13 +39,21 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.en.EnglishMinimalStemmer;
+import org.apache.lucene.analysis.fr.FrenchLightStemmer;
+import org.apache.lucene.analysis.fr.FrenchMinimalStemFilter;
+import org.apache.lucene.analysis.fr.FrenchMinimalStemmer;
+import org.apache.lucene.analysis.sv.SwedishLightStemmer;
 import org.apache.lucene.analysis.util.ResourceLoader;
 import org.apache.lucene.analysis.util.ResourceLoaderAware;
 import org.apache.lucene.analysis.util.TokenFilterFactory;
 import org.apache.lucene.util.IOUtils;
+import org.apache.solr.core.SolrResourceLoader;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
+import org.tartarus.snowball.SnowballProgram;
 
 /**
  * Factory for {@link DictionaryLemmatizerFilter}. Minimal configuration
@@ -76,6 +85,7 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
   private static final String PARAM_STORE_POS_TAG = "storePosTag";
   private static final String PARAM_DICTIONARIES = "dictionaries";
   private static final String PARAM_DIRECTMEMORY = "directMemory";
+  private static final String PARAM_FALLBACK_STEMMER = "fallBackStemmer";
 
   private int minLength;
   private String dictionaries;
@@ -87,6 +97,10 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
   private String[] reduceTo;
   private boolean storePosTag;
   private boolean directMemory;
+  private String fallBackStemmerClassName;
+  private Map<String, String>   fallBackStemmerParams;
+  //private ResourceLoader loader;
+  //private Object filter = null;
 
   /** Creates a new DictionaryLemmatizerFilterFactory */
   public DictionaryLemmatizerFilterFactory(final Map<String, String> args) {
@@ -104,6 +118,21 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
     reduceTo = (reduceToList != null) ? reduceToList.split(",") : null;
     storePosTag = getBoolean(args, PARAM_STORE_POS_TAG, false);
     directMemory = getBoolean(args, PARAM_DIRECTMEMORY, false);
+    String fallBackStemmer = get(args, PARAM_FALLBACK_STEMMER, "");
+
+    if (!"".equals(fallBackStemmer)) {
+      String[] fallBackStemmerArgs = fallBackStemmer.split("\\|");
+      try {
+        fallBackStemmerClassName = fallBackStemmerArgs[0];
+        fallBackStemmerParams = new HashMap<String, String> ();
+        for (int i=1; i<fallBackStemmerArgs.length; i++) {
+          String[] param = fallBackStemmerArgs[i].split("=");
+          fallBackStemmerParams.put(param[0], param[1]);
+        }
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Parameter " + PARAM_FALLBACK_STEMMER + " not properly set");
+      }
+    }
 
     if (lemmaPos < 0) {
       throw new IllegalArgumentException("Parameter " + PARAM_LEMMA_POS + " not properly set");
@@ -296,11 +325,52 @@ public class DictionaryLemmatizerFilterFactory extends TokenFilterFactory implem
 
   @Override
   public TokenStream create(TokenStream input) {
-    return new DictionaryLemmatizerFilter(input, normalizedWordlist);
+
+    Object fallbackStemmer = null;
+    try {
+      switch (fallBackStemmerClassName) {
+        case "FrenchMinimalStemmer":
+          fallbackStemmer = new FrenchMinimalStemmer();
+          break;
+        case "FrenchLightStemmer":
+          fallbackStemmer = new FrenchLightStemmer();
+          break;
+        case "EnglishMinimalStemmer":
+          fallbackStemmer = new EnglishMinimalStemmer();
+          break;
+        case "SnowballStemmer":
+          String name = fallBackStemmerParams.get("language");
+          try {
+            Class<? extends SnowballProgram> stemClass =
+                    Class.forName("org.tartarus.snowball.ext." + name + "Stemmer").asSubclass(SnowballProgram.class);
+            fallbackStemmer = stemClass.newInstance();
+          } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid stemmer class specified: " + name, e);
+          }
+          break;
+      }
+    } catch (Exception e) {
+
+    }
+
+      /*
+    TokenFilter fallbackStemmer = null;
+    if (filterFactory != null) {
+      if (filterFactory instanceof ResourceLoaderAware) {
+        try {
+          ((ResourceLoaderAware) filterFactory).inform(this.loader);
+          fallbackStemmer = filterFactory.create(input);
+        } catch (IOException e) {}
+      }
+    }
+    */
+    return new DictionaryLemmatizerFilter(input, normalizedWordlist, fallbackStemmer);
   }
 
   @Override
   public void inform(final ResourceLoader resourceLoader) throws IOException {
+    //this.loader = resourceLoader;
+
     final String[] files = dictionaries.split(",");
     final List<InputStream> dictionaries = new ArrayList<InputStream>();
     try {

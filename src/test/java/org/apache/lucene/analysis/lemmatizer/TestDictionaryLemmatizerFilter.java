@@ -37,7 +37,7 @@ public class TestDictionaryLemmatizerFilter extends BaseTokenStreamTestCase {
     protected TokenStreamComponents createComponents(final String fieldName) {
       Tokenizer source = new MockTokenizer(MockTokenizer.WHITESPACE, false);
       return new TokenStreamComponents(source, new DictionaryLemmatizerFilter(source,
-          getMockedWordlist()));
+          getMockedWordlist(), null));
     }
   };
 
@@ -49,7 +49,7 @@ public class TestDictionaryLemmatizerFilter extends BaseTokenStreamTestCase {
         Tokenizer source = new MockTokenizer(MockTokenizer.WHITESPACE, false);
         TokenStream sink = new SetKeywordMarkerFilter(source, exclusionSet);
         return new TokenStreamComponents(source, new DictionaryLemmatizerFilter(sink,
-            getMockedWordlist()));
+            getMockedWordlist(), null));
       }
     };
     checkOneTerm(a, "katze", "katze");
@@ -66,7 +66,7 @@ public class TestDictionaryLemmatizerFilter extends BaseTokenStreamTestCase {
       protected TokenStreamComponents createComponents(final String fieldName) {
         Tokenizer tokenizer = new KeywordTokenizer();
         return new TokenStreamComponents(tokenizer, new DictionaryLemmatizerFilter(tokenizer,
-            getMockedWordlist()));
+            getMockedWordlist(), null));
       }
     };
     checkOneTerm(a, "", "");

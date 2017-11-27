@@ -24,11 +24,20 @@ import java.util.Queue;
 
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.de.GermanMinimalStemmer;
+import org.apache.lucene.analysis.en.EnglishMinimalStemFilter;
+import org.apache.lucene.analysis.en.EnglishMinimalStemmer;
+import org.apache.lucene.analysis.fr.FrenchLightStemmer;
+import org.apache.lucene.analysis.fr.FrenchMinimalStemFilter;
+import org.apache.lucene.analysis.fr.FrenchMinimalStemmer;
 import org.apache.lucene.analysis.miscellaneous.SetKeywordMarkerFilter;
+import org.apache.lucene.analysis.no.NorwegianMinimalStemmer;
+import org.apache.lucene.analysis.sv.SwedishLightStemmer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.KeywordAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.util.AttributeSource;
+import org.tartarus.snowball.SnowballProgram;
 
 /**
  * A {@link TokenFilter} that applies {@link DictionaryLemmatizer} to lemmatize
@@ -45,6 +54,7 @@ public final class DictionaryLemmatizerFilter extends TokenFilter {
   private final KeywordAttribute keywordAttr = addAttribute(KeywordAttribute.class);
   private final PositionIncrementAttribute positionAttr = addAttribute(PositionIncrementAttribute.class);
   private final Queue<String> terms = new LinkedList<String>();
+  private final Object fallbackStemmer;
 
   private AttributeSource.State current = null;
 
@@ -54,9 +64,10 @@ public final class DictionaryLemmatizerFilter extends TokenFilter {
    * @param input TokenStream whose tokens will be lemmatized
    * @param wordlist a Hashmap containing all the words with their lemmas
    */
-  public DictionaryLemmatizerFilter(final TokenStream input, final Map<String, String[]> wordlist) {
+  public DictionaryLemmatizerFilter(final TokenStream input, final Map<String, String[]> wordlist, Object fallbackStemmer) {
     super(input);
     lemmatizer = new DictionaryLemmatizer(wordlist);
+    this.fallbackStemmer = fallbackStemmer;
   }
 
   @Override
@@ -81,6 +92,41 @@ public final class DictionaryLemmatizerFilter extends TokenFilter {
               terms.add(values[i]);
             }
           }
+        } else if (fallbackStemmer != null) {
+          if (fallbackStemmer instanceof SnowballProgram) {
+            char termBuffer[] = termAtt.buffer();
+            final int length = termAtt.length();
+
+            SnowballProgram snowball = (SnowballProgram) fallbackStemmer;
+            snowball.setCurrent(buffer, termAtt.length());
+            snowball.stem();
+
+            final char finalTerm[] = snowball.getCurrentBuffer();
+            final int newLength = snowball.getCurrentBufferLength();
+            if (finalTerm != termBuffer)
+              termAtt.copyBuffer(finalTerm, 0, newLength);
+            else
+              termAtt.setLength(newLength);
+
+          } else {
+            int len = 0;
+            if (fallbackStemmer instanceof NorwegianMinimalStemmer) {
+              len = ((NorwegianMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof SwedishLightStemmer) {
+              len = ((SwedishLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof GermanMinimalStemmer) {
+              len = ((GermanMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof EnglishMinimalStemmer) {
+              len = ((EnglishMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof FrenchMinimalStemmer) {
+              len = ((FrenchMinimalStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            } else if (fallbackStemmer instanceof FrenchLightStemmer) {
+              len = ((FrenchLightStemmer) fallbackStemmer).stem(buffer, termAtt.length());
+            }
+            if (len > 0) {
+              termAtt.setEmpty().append(tokenTerm.substring(0, len));
+            }
+          }
         }
         current = captureState();
       }
@@ -90,9 +136,9 @@ public final class DictionaryLemmatizerFilter extends TokenFilter {
     }
   }
 
-  protected boolean createToken(final String synonym, final AttributeSource.State current) {
+  protected boolean createToken(final String token, final AttributeSource.State current) {
     restoreState(current);
-    termAtt.setEmpty().append(synonym);
+    termAtt.setEmpty().append(token);
     positionAttr.setPositionIncrement(0);
     return true;
   }
