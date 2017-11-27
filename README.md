@@ -38,7 +38,8 @@ wordClasses|subst,verb,adj||which word class to add (note: bad parameter name, w
 reduceTo|subst,verb||words with several stems get reduced to one in this order. Optionally
 minLength|||(optional) word minimum length in dictionnary. Smaller words will be ignored.
 storePosTag|false|false|(optional) if 'true' wordClassPos should be >0 and wordClasses shouldn't be empty
-
+directMemory|true|false|(optional) if 'true' dictionnaries are load in direct memory (out off jvm heap). This is experimental for large dictionnaries. 
+fallBackStemmer|EnglishMinimalStemmer<br>SnowballStemmer&#124;language=English||(optional) define a fall back stemmer for terms not defined in lemmas dictionnaries. Available stemmer are :<br> ArabicStemmer,<br>BulgarianStemmer,<br>CzechStemmer,<br>EnglishMinimalStemmer,<br>FinnishLightStemmer,<br>FrenchLightStemmer,<br>FrenchMinimalStemmer,<br>GalicianMinimalStemmer,<br>GalicianStemmer,<br>GermanLightStemmer,<br>GermanMinimalStemmer,<br>GreekStemmer,<br>HindiStemmer,<br>HungarianLightStemmer,<br>IndonesianLightStemmer,<br>IndonesianStemmer,<br>ItalianLightStemmer,<br>LatvianStemmer,<br>NorwegianLightStemmer,<br>NorwegianMinimalStemmer,<br>PortugueseLightStemmer,<br>PortugueseMinimalStemmer,<br>PortugueseStemmer,<br>RussianLightStemmer,<br>SoraniStemmer,<br>SpanishLightStemmer,<br>SwedishLightStemmer<br><br>and SnowballStemmer with language parameter specified like this<br>SnowballStemmer&#124;language=English
 
 ## Dictionary - dictionary.txt
 
