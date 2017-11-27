@@ -91,6 +91,22 @@ public class TestDictionaryLemmatizerFilterFactory extends BaseTokenStreamFactor
     assertTokenStreamContents(stream, new String[] { "abaisser", "agneler" });
   }
 
+  public void testLemmatizerWithNotRegularLemmasFallBackStemmer() throws Exception {
+    Reader reader = new StringReader("bücher eldre tables");
+    TokenStream stream = whitespaceMockTokenizer(reader);
+    Map<String, String> args = new HashMap<String, String>();
+    args.put("dictionaries", "dictionary.txt");
+    args.put("lemmaPos", "0");
+    args.put("wordPos", "1");
+    args.put("fallBackStemmer", "SnowballStemmer|language=English");
+    DictionaryLemmatizerFilterFactory f = new DictionaryLemmatizerFilterFactory(args);
+    ResourceLoader l = new ClasspathResourceLoader();
+    f.inform(l);
+    stream = f.create(stream);
+    assertTrue(stream instanceof DictionaryLemmatizerFilter);
+    assertTokenStreamContents(stream, new String[] { "buch", "gammel", "tabl" });
+  }
+
 	public void testLemmatizerWithMultipleLemmas() throws Exception {
 		Reader reader = new StringReader("sykler");
 		TokenStream stream = whitespaceMockTokenizer(reader);
